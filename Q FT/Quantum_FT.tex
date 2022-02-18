@@ -1,0 +1,297 @@
+\documentclass[preprint,aps,prd,nofootinbib,superscriptaddress]{revtex4-2}
+
+\usepackage[T1]{fontenc}
+\usepackage[latin9]{inputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+%\usepackage{tikz-feynman}
+\usepackage{simplewick}
+\usepackage{slashed}
+\usepackage{caption}
+\usepackage{multirow}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage[caption = false]{subfig}
+\usepackage{mathtools}
+\usepackage{tikz}
+\usetikzlibrary{quantikz}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User specified LaTeX commands.
+
+\newcommand{\BraKet}[2]{\langle #1 | #2 \rangle}
+\newcommand{\KetBra}[2]{\ket{#1}\bra{#2}}
+
+\begin{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\title{\boldmath Quantum Fourier Transform}
+
+
+\author{Cody M. Grant}
+
+
+\date{\today}
+
+%
+\maketitle
+\newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Classical Fourier Transform}
+%
+Classically, important in many different aspects of computing: single processing, data compression, acoustical engineering, etc. I specifically remember its importance in higher level math classes and undergrad physics classes like "Waves" and "Acoustics". Discrete FT acts on a vector $(x_0, x_1,...)$ and maps to a different vector $(y_0, y_1,...)$ such that
+%
+\begin{eqnarray} \label{eqn:CFT}
+y_k &=& \frac{1}{\sqrt{N}} \sum \limits _{j=0} ^{N-1} x_j \omega_N^{jk} \quad \quad \quad \text{where } \omega_N^{jk} = e^{2 i \pi \frac{jk}{N}}
+\end{eqnarray}
+%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Quantum version}
+%
+The Q version is very similar to the classical, where we want to map two quantum states to one another: $\ket{X}=\sum \limits _{j=0} ^{N-1} x_j \ket{j}$  to $\ket{Y}=\sum \limits _{k=0} ^{N-1} y_k \ket{k}$ according to Eqn.~\ref{eqn:CFT}. This can also be used to express the map:
+%
+\begin{eqnarray} 
+\ket{j} &\rightarrow & \frac{1}{\sqrt{N}} \sum \limits _{k=0} ^{N-1} \omega_N^{jk} \ket{k}
+\end{eqnarray}
+%
+or the most important thing, the unitary matrix
+%
+\begin{eqnarray}
+U_{QFT} &=& \frac{1}{\sqrt{N}} \sum \limits _{j=0} ^{N-1} \sum \limits _{k=0} ^{N-1} \omega_N^{jk} \ket{k}\bra{j}
+\end{eqnarray}
+%
+The QFT transforms between two bases, as the classical does, but we call the bases: the computational (Z) basis and the Fourier basis. Interestingly, the Hadamard gate already transforms between two bases, and it turns out that the Hadarmard gate is the single qubit version of QFT (and in this case, the X-basis is our Fourier basis).
+%
+
+%
+In the computational basis, we store numbers as binary using the $\ket{0}$ and $\ket{1}$ states. In the Fourier basis, we store numbers using different rotations about the Z-axis (of the Bloch sphere). For state $\ket{\tilde{0}}$, all qubits are in the state $\ket{+}$. For state $\ket{\tilde{5}}$ on 4 qubits we have the rotations:
+%
+\begin{eqnarray} 
+R(q_0) &=& \frac{2^0\cdot 5}{2^{n=4}}(2\pi \text{ rad}) = \frac{5}{16}(2\pi \text{ rad})
+\nonumber \\
+R(q_1) &=& \frac{2^1\cdot 5}{2^{n=4}}(2\pi \text{ rad}) = \frac{5}{8}(2\pi \text{ rad})
+\nonumber \\
+R(q_2) &=& \frac{2^2\cdot 5}{2^{n=4}}(2\pi \text{ rad}) = \frac{5}{4}(2\pi \text{ rad})
+\nonumber \\
+R(q_3) &=& \frac{2^3\cdot 5}{2^{n=4}}(2\pi \text{ rad}) = \frac{5}{2}(2\pi \text{ rad})
+\end{eqnarray}
+%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{QFT for larger $N$}
+%
+Say $N=2^n$, $QFT_N$ acting on state $\ket{x} = \ket{x_1...x_N}$ where $x_1$ is the most significant bit. The transformation is then:
+%
+\begin{eqnarray} 
+QFT_N \ket{x} &=& \frac{1}{\sqrt{N}} \sum \limits _{y=0} ^{N-1} \omega_N^{xy} \ket{y}
+\nonumber \\
+&=& \frac{1}{\sqrt{N}} \sum \limits _{y=0} ^{N-1} e^{2\pi i x y/2^n} \ket{y}
+\nonumber \\
+&=& \frac{1}{\sqrt{N}} \sum \limits _{y=0} ^{N-1} e^{2\pi i \left(\sum\limits _{k=1} ^n \frac{y_k}{2^k}\right)x} \ket{y_1 ...y_n}
+\nonumber \\
+&=& \frac{1}{\sqrt{N}} \sum \limits _{y=0} ^{N-1} \prod\limits _{k=1} ^n e^{2\pi i x y_k/ 2^k} \ket{y_1 ...y_n}
+\end{eqnarray}
+%
+where in the second line we rewrote in fractional binary notation: if $y=y_1 ... y_n$ then $y/2^n = \sum\limits _{k=1} ^n \frac{y_k}{2^k}$. From here, we rearrange the sum and product, and expanding the sum: $\sum \limits _{y=0} ^{N-1} = \sum \limits _{y_1=0} ^{1} \sum \limits _{y_2=0} ^{1} ... \sum \limits _{y_n=0} ^{1}$, we find the expression:
+%
+\begin{eqnarray} \label{eqn:QFT_N}
+QFT_N \ket{x} &=& \frac{1}{\sqrt{N}} \bigotimes \limits _{k=1} ^n \left(\ket{0} + e^{2\pi i x/ 2^k} \ket{1}\right)
+\nonumber \\
+&=& \frac{1}{\sqrt{N}} \left(\ket{0} + e^{\frac{2\pi i}{2^1} x} \ket{1}\right) \otimes \left(\ket{0} + e^{\frac{2\pi i}{2^2} x} \ket{1}\right) \otimes ... \otimes \left(\ket{0} + e^{\frac{2\pi i}{2^n} x} \ket{1}\right)
+\end{eqnarray} 
+%
+which I think looks quite elegant and beautiful compared to what we started with. 
+%
+
+%
+\textbf{This is a weird thing about the online qiskit textbook. There are some places where they write $\ket{q_2}\otimes\ket{q_1} \otimes \ket{q_0}$ as that's how qiskit (the language) orders the qubits, and sometimes they use the opposite order $\ket{q_0}\otimes\ket{q_1} \otimes \ket{q_2}$ as they are doing now and what they usually use in their mathematical theory/proofs. It makes it really confusing beginners as the mathematical theory and practical code are opposites, and this causes hours of trying to figure out where you went wrong.}
+%
+
+%
+The circuit implementation makes use of two gates, the first being the Hadamard gate and takes the form:
+%
+\begin{eqnarray} 
+H \ket{x_k} &=& \frac{1}{\sqrt{2}} \left( \ket{0} + e^{\frac{2\pi i}{2} x_k} \ket{1} \right)
+\end{eqnarray}
+%
+Which if you plug in $x_k = 0, 1$ it can be seen that this lines up with the previous results of the $H$-gate. The second is a 2-qubit controlled rotation gate given as:
+%
+\begin{eqnarray} 
+CROT_k &=& \ket{0}\bra{0} \otimes I + \ket{1}\bra{1} \otimes UROT_k = 
+\begin{pmatrix}
+I \quad & 0 \\
+0 \quad & UROT_k
+\end{pmatrix}
+\end{eqnarray}
+%
+where 
+%
+\begin{eqnarray} 
+UROT_k &=&
+\begin{pmatrix}
+1 \quad & 0 \\
+0 \quad & \exp\left(\frac{2\pi i}{2^k} \right)
+\end{pmatrix}
+\end{eqnarray}
+%
+If the first qubit is the control and the second is the target then:
+%
+\begin{eqnarray} 
+CROT_k \ket{0x_j} &=& \ket{0x_j}
+\nonumber \\
+CROT_k \ket{1x_j} &=& \exp\left(\frac{2\pi i}{2^k} \right) \ket{1x_j}
+\end{eqnarray}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{3 qubit example}
+%
+The circuit will look like the following
+%
+\begin{figure} [H]
+\centering
+\begin{quantikz}
+\lstick{$\ket{x_1}$} & \qw\slice{1}	& \qw\slice{2} 			& \ctrl{}\slice{3}		 & \qw \slice{4}	
+& \ctrl{}\slice{5}		& \gate{H}\slice{6}	& \swap{2} 	& \qw \\
+\lstick{$\ket{x_2}$} & \qw			& \ctrl{} 				& \qw 		  			 & \gate{H}		
+& \gate{UROT_2}\vqw{-1} & \qw				& \qw		& \qw \\
+\lstick{$\ket{x_3}$} & \gate{H}		& \gate{UROT_2}\vqw{-1} & \gate{UROT_3} \vqw{-2} & \qw 			
+& \qw					& \qw				& \swap{}	& \qw
+\end{quantikz}
+\caption{3 qubit QFT circuit}
+\end{figure}
+%
+mathematically, the steps are
+%
+\begin{eqnarray} 
+\ket{\psi_1} &=& \frac{1}{\sqrt{2}} \left[\ket{0} + \exp\left(\frac{2\pi i}{2} x_3 \right)\ket{1} \right] \otimes \ket{x_2} \otimes \ket{x_1}
+\nonumber \\
+\ket{\psi_2} &=& \frac{1}{\sqrt{2}} \left[\ket{0} + \exp\left(\frac{2\pi i}{2^2} x_2 + \frac{2\pi i}{2} x_3 \right)\ket{1} \right] \otimes \ket{x_2} \otimes \ket{x_1}
+\nonumber \\
+\ket{\psi_3} &=& \frac{1}{\sqrt{2}} \left[\ket{0} + \exp\left(\frac{2\pi i}{2^3} x_1 + \frac{2\pi i}{2^2} x_2 + \frac{2\pi i}{2} x_3 \right)\ket{1} \right] \otimes \ket{x_2} \otimes \ket{x_1}
+\nonumber \\
+\ket{\psi_4}  &=& \frac{1}{\sqrt{2}} \left[\ket{0} + \exp\left(\frac{2\pi i}{2^3} x_1 + \frac{2\pi i}{2^2} x_2 + \frac{2\pi i}{2} x_3 \right)\ket{1} \right]
+\nonumber \\
+&& \quad \quad \quad \otimes 
+\frac{1}{\sqrt{2}} \left[\ket{0} + \exp\left(\frac{2\pi i}{2} x_2 \right) \ket{1} \right]
+\otimes \ket{x_1}
+\nonumber \\
+\ket{\psi_5} &=& \frac{1}{\sqrt{2}} \left[\ket{0} + \exp\left(\frac{2\pi i}{2^3} x_1 + \frac{2\pi i}{2^2} x_2 + \frac{2\pi i}{2} x_3 \right)\ket{1} \right]
+\nonumber \\
+&& \quad \quad \quad \otimes 
+\frac{1}{\sqrt{2}} \left[\ket{0} + \exp\left(\frac{2\pi i}{2^2} x_1 + \frac{2\pi i}{2} x_2 \right) \ket{1} \right]
+\otimes \ket{x_1}
+\nonumber \\
+\ket{\psi_6} &=& \frac{1}{\sqrt{2}} \left[\ket{0} + \exp\left(\frac{2\pi i}{2^3} x_1 + \frac{2\pi i}{2^2} x_2 + \frac{2\pi i}{2} x_3 \right)\ket{1} \right]
+\\
+&& \quad \quad \quad \otimes 
+\frac{1}{\sqrt{2}} \left[\ket{0} + \exp\left(\frac{2\pi i}{2^2} x_1 + \frac{2\pi i}{2} x_2 \right) \ket{1} \right]
+\otimes \frac{1}{\sqrt{2}} \left[\ket{0} + \exp\left(\frac{2\pi i}{2} x_1 \right)\ket{1} \right]
+\nonumber
+\end{eqnarray}
+%
+The last step is to swap $y_1$ with $y_3$. We need to reverse the order of the qubits to match Eqn.~\ref{eqn:QFT_N}, which is the theoretical QFT.
+%
+
+%
+The SWAP gate is a series of three CNOT gates, and in our case for this 3 qubit circuit would be:
+%
+\begin{eqnarray} 
+SWAP(0,2) &=& CNOT(2,0) CNOT(0,2) CNOT(2,0)
+\nonumber \\
+&=& (\KetBra{0}{0} \otimes I \otimes  I + \KetBra{1}{1} \otimes I \otimes X) 
+\nonumber \\
+&& \quad \times 
+(I \otimes I \otimes \KetBra{0}{0} + X \otimes I \otimes \KetBra{1}{1}) 
+\nonumber \\
+&& \quad \times 
+(\KetBra{0}{0} \otimes I \otimes I + \KetBra{1}{1} \otimes I \otimes X)
+\nonumber \\
+&=& (\KetBra{0}{0} \otimes I \otimes  I + \KetBra{1}{1} \otimes I \otimes X) 
+\nonumber \\
+&& \quad \times 
+(\KetBra{0}{0} \otimes I \otimes \KetBra{0}{0} + \KetBra{1}{0} \otimes I \otimes \KetBra{1}{1} 
+\nonumber \\
+&& \quad \quad + \KetBra{1}{1} \otimes I \otimes \KetBra{0}{1} + \KetBra{0}{1} \otimes I \otimes \KetBra{1}{0}) 
+\nonumber \\
+&=&
+(\KetBra{0}{0} \otimes I \otimes \KetBra{0}{0} + \KetBra{0}{1} \otimes I \otimes \KetBra{1}{0}
+\nonumber \\
+&& \quad \quad +  \KetBra{1}{0} \otimes I \otimes \KetBra{0}{1} + \KetBra{1}{1} \otimes I \otimes \KetBra{1}{1} ) 
+\end{eqnarray}
+%
+We will apply each one of these four terms one at a time to our $\psi_6$, and $q_2$ is going to be unaffected, so we're just leaving that as $\ket{q_2}$:
+%
+\begin{eqnarray} 
+\ket{\psi_{7A}} &=& \frac{1}{\sqrt{2}} \left[\ket{0} \right] 
+\otimes \ket{q_2}
+\otimes \frac{1}{\sqrt{2}} \left[\ket{0}\right]
+\nonumber
+\end{eqnarray}
+%
+\begin{eqnarray} 
+\ket{\psi_{7B}} &=& \frac{1}{\sqrt{2}} \left[\exp\left(\frac{2\pi i}{2^3} x_1 + \frac{2\pi i}{2^2} x_2 + \frac{2\pi i}{2} x_3 \right)\ket{0} \right] 
+\otimes \ket{q_2}
+\otimes \frac{1}{\sqrt{2}} \left[\ket{1}\right]
+\nonumber \\
+&=& \frac{1}{\sqrt{2}} \left[\ket{0} \right] 
+\otimes \ket{q_2}
+\otimes \frac{1}{\sqrt{2}} \left[\exp\left(\frac{2\pi i}{2^3} x_1 + \frac{2\pi i}{2^2} x_2 + \frac{2\pi i}{2} x_3 \right)\ket{1}\right]
+\end{eqnarray}
+%
+\begin{eqnarray} 
+\ket{\psi_{7C}} &=& \frac{1}{\sqrt{2}} \left[\ket{1} \right] 
+\otimes \ket{q_2}
+\otimes \frac{1}{\sqrt{2}} \left[ \exp\left(\frac{2\pi i}{2} x_1 \right)\ket{0} \right]
+\nonumber \\
+&=& \frac{1}{\sqrt{2}} \left[\exp\left(\frac{2\pi i}{2} x_1 \right)\ket{1} \right] 
+\otimes \ket{q_2}
+\otimes \frac{1}{\sqrt{2}} \left[ \ket{0} \right]
+\end{eqnarray}
+%
+\begin{eqnarray} 
+\ket{\psi_{7D}} &=& \frac{1}{\sqrt{2}} \left[ \exp\left(\frac{2\pi i}{2^3} x_1 + \frac{2\pi i}{2^2} x_2 + \frac{2\pi i}{2} x_3 \right)\ket{1} \right] 
+\otimes \ket{q_2}
+\otimes \frac{1}{\sqrt{2}} \left[\exp\left(\frac{2\pi i}{2} x_1 \right)\ket{1} \right]
+\nonumber \\
+&=& \frac{1}{\sqrt{2}} \left[\exp\left(\frac{2\pi i}{2} x_1 \right) \ket{1} \right] 
+\otimes \ket{q_2}
+\otimes \frac{1}{\sqrt{2}} \left[\exp\left(\frac{2\pi i}{2^3} x_1 + \frac{2\pi i}{2^2} x_2 + \frac{2\pi i}{2} x_3 \right)\ket{1} \right]
+\nonumber \\
+\end{eqnarray}
+%
+Summing it all together, we find the expected result from using the SWAP gate as well as the result from the generic QFT, but sometimes it's nice to solve it yourself.
+%
+\begin{eqnarray} 
+\ket{\psi_{7}} &=& \frac{1}{\sqrt{2}} \left[\ket{0} + \exp\left(\frac{2\pi i}{2} x_1 \right)\ket{1} \right]  \otimes \frac{1}{\sqrt{2}} \left[\ket{0} + \exp\left(\frac{2\pi i}{2^2} x_1 + \frac{2\pi i}{2} x_2 \right) \ket{1} \right]
+\nonumber \\
+&& \quad \quad \quad \otimes 
+\frac{1}{\sqrt{2}} \left[\ket{0} + \exp\left(\frac{2\pi i}{2^3} x_1 + \frac{2\pi i}{2^2} x_2 + \frac{2\pi i}{2} x_3 \right)\ket{1}\right]
+\end{eqnarray}
+%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Extra notes}
+%
+There are two things to note about a practical QFT circuit:
+%
+
+%
+1. The last qubit depends on all other qubits, but as you go "up" the circuit, each qubit relies on one less bit. This becomes important on the physical hardware when using nearest neighbor couplings are easier to acquire good results compared to distant couplings between qubits.
+%
+
+%
+2. As a QFT circuit becomes large, there is an increased amount of time doing rotations of small angles. It turns out that rotations below a certain threshold can be ignored (kinda like small angle approx?) without effecting the results too much. This is known as approximate QFT. This helps reduce decoherence and potential gate errors on physical hardware.
+%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{thebibliography}{99}
+
+
+
+\end{thebibliography}
+
+\end{document}
+
+

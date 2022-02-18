@@ -1,0 +1,297 @@
+\documentclass[preprint,aps,prd,nofootinbib,superscriptaddress]{revtex4-2}
+
+\usepackage[T1]{fontenc}
+\usepackage[latin9]{inputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+%\usepackage{tikz-feynman}
+\usepackage{simplewick}
+\usepackage{slashed}
+\usepackage{caption}
+\usepackage{multirow}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage[caption = false]{subfig}
+\usepackage{mathtools}
+\usepackage{tikz}
+\usetikzlibrary{quantikz}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User specified LaTeX commands.
+
+%
+\newcommand{\MAJgate}{\gate[3,disable auto height]{
+\begin{array}{c} 
+\text{M} \\ 
+\text{A} \\ 
+\text{J} 
+\end{array}}}
+
+\newcommand{\UMAgate}{\gate[3,disable auto height]{
+\begin{array}{c} 
+\text{U} \\ 
+\text{M} \\ 
+\text{A} 
+\end{array}}}
+
+\begin{document}
+
+%\preprint{\vbox{\hbox{}}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\title{\boldmath Cuccaro Ripple-Carry Adder}
+
+
+\author{Cody M. Grant}
+
+
+\date{\today}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{abstract}
+
+The work for a ripple-carry addition circuit was done by Cuccaro, Draper, Kutin, and Moulton (arXiv: 0410184 [quant-ph]). 
+
+It implements 2 gates constructed out of $CX$, $CCX$, and $X$ gates.
+    
+\end{abstract}
+%
+\maketitle
+
+\newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{MAJ gate}
+%
+The first gate is the MAJ gate, which computes the majority of the three bits in place.
+%
+\begin{figure} [H]
+\centering
+\subfloat{
+\begin{quantikz}
+& \MAJgate	& \qw \\
+& 			& \qw \\
+& 			& \qw \\
+\end{quantikz}
+} $\text{\quad=}$  
+\subfloat{
+\begin{quantikz}
+& \qw 				& \targ{} 			& \ctrl{2}	& \qw \\
+& \targ{} 			& \qw	 			& \ctrl{}	& \qw \\
+& \ctrl{} \vqw{-1} 	& \ctrl{} \vqw{-2}  & \targ{}	& \qw \\
+\end{quantikz}
+}
+\end{figure}
+%
+mathematically, the first 2 $CX$ gates equate to
+%
+\begin{eqnarray}
+(CX(2,1))(CX(2,0)) &=& (\ket{0}\bra{0} \otimes I \otimes I + \ket{1}\bra{1} \otimes X \otimes I)
+\nonumber \\
+&& \quad \times(\ket{0}\bra{0} \otimes I \otimes I + \ket{1}\bra{1} \otimes I \otimes X)
+\nonumber \\
+&=& (\ket{0}\bra{0} \otimes I \otimes I + \ket{1}\bra{1} \otimes X \otimes X)
+\end{eqnarray}
+
+Then multiplying in the $CCX$ gate
+\begin{eqnarray}
+\text{[MAJ]} &=& (\ket{0}\bra{0} \otimes I \otimes I + \ket{1}\bra{1} \otimes X \otimes X)
+\nonumber \\
+&& \times(I \otimes I \otimes \ket{0}\bra{0} + I \otimes \ket{0}\bra{0} \otimes \ket{1}\bra{1} + X \otimes \ket{1}\bra{1} \otimes \ket{1}\bra{1})
+\nonumber \\
+&=& \ket{0}\bra{0} \otimes \left[I \otimes \ket{0}\bra{0} + \ket{0}\bra{0} \otimes \ket{1}\bra{1}\right] 
+\nonumber \\
+&& + \ket{0}\bra{1} \otimes \left[\ket{1}\bra{1} \otimes \ket{1}\bra{1}\right]
+\nonumber \\
+&& + \ket{1}\bra{0} \otimes \left[\ket{0}\bra{1} \otimes \ket{0}\bra{1}\right]
+\nonumber \\
+&& + \ket{1}\bra{1} \otimes \left[X \otimes \ket{1}\bra{0} + \ket{1}\bra{0} \otimes \ket{0}\bra{1}\right]
+\nonumber \\
+&=& 
+\begin{pmatrix}
+1 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \\
+0 \quad & 1 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \\
+0 \quad & 0 \quad & 1 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \\
+0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 1 \\
+0 \quad & 0 \quad & 0 \quad & 1 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \\
+0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 1 \quad & 0 \\
+0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 1 \quad & 0 \quad & 0 \\
+0 \quad & 0 \quad & 0 \quad & 0 \quad & 1 \quad & 0 \quad & 0 \quad & 0
+\end{pmatrix}
+\end{eqnarray}
+
+What we want to show is that after this gate: the first qubit $c_i\rightarrow c_i\oplus a_i$, the second qubit $b_i\rightarrow b_i\oplus a_i$, and the third qubit $a_i\rightarrow c_{i+1}$. And our above gate transforms the 3-state qubit wavefunction like:
+
+\begin{eqnarray}
+\ket{a_i b_i c_i} &=& 
+\begin{pmatrix} 000 \\ 001 \\ 010 \\ 011 \\ 100 \\ 101 \\ 110 \\ 111 \end{pmatrix} 
+\xrightarrow[\text{[MAJ]}]{} 
+\begin{pmatrix} 000 \\ 001 \\ 010 \\ 111 \\ 011 \\ 110 \\ 101 \\ 100 \end{pmatrix}
+= \ket{c_{i+1} (b_i\oplus a_i) (c_i\oplus a_i)}
+\end{eqnarray}
+
+and is this what we actually have? Yes, if you do it case-by-case, you find that this is true, although a little hard to wrap your head around initially if you aren't use to mod-2 addition. I am curious as to how they thought about constructing it. Perhaps, it was in tandem with the other gate they use, the $UMA$ gate, but the whole process is really interesting to me.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{UMA gate}
+
+The second gate in their adder, which stands for the "UnMajority and Add" gate. They have two versions of this gate: the first being simpler to read, and the second has greater parallelism.
+%
+\begin{figure} [H]
+\centering
+\subfloat{
+\begin{quantikz}
+& \UMAgate 	& \qw \\
+& 			& \qw \\
+& 			& \qw \\
+\end{quantikz}
+} $\text{\quad = }$  
+\subfloat[2-CX version]{
+\begin{quantikz}
+& \ctrl{2}	& \targ{} 			& \ctrl{1}	& \qw \\
+& \ctrl{}	& \qw	 			& \targ{}	& \qw \\
+& \targ{}	& \ctrl{} \vqw{-2}  & \qw		& \qw \\
+\end{quantikz}
+} $\text{\quad OR }$  
+\subfloat[3-CX version]{
+\begin{quantikz}
+& \qw		& \ctrl{1}	& \ctrl{2}	& \qw		& \targ{} 			& \qw 				& \qw \\
+& \gate{X}	& \targ{}	& \ctrl{}	& \gate{X}	& \qw	 			& \targ{} 			& \qw \\
+& \qw		& \qw		& \targ{}	& \qw		& \ctrl{} \vqw{-2}  & \ctrl{} \vqw{-1}	& \qw \\
+\end{quantikz}
+}
+\end{figure}
+%
+In both cases, they take the three incoming qubits and convert them the same way: $c_i\oplus a_i \rightarrow c_i$, $b_i\oplus a_i \rightarrow s_i$, and $c_{i+1} \rightarrow a_i$, where $s_i = c_i\oplus b_i\oplus a_i$. Since the result is the same, we can break down the simpler gate for ... uhh... simplicity. Starting with the two $CX$ gates:
+%
+\begin{eqnarray}
+(CX(2,0))(CX(0,1)) &=& (\ket{0}\bra{0} \otimes I \otimes I + \ket{1}\bra{1} \otimes I \otimes X)
+\nonumber \\
+&& \quad \times(I \otimes I \otimes \ket{0}\bra{0}  + I \otimes X \otimes \ket{1}\bra{1} )
+\nonumber \\
+&=& (\ket{0}\bra{0} \otimes (I \otimes \ket{0}\bra{0}  +  X \otimes \ket{1}\bra{1})
++ \ket{1}\bra{1} \otimes (I \otimes \ket{1}\bra{0}  + \otimes X \otimes \ket{0}\bra{1}))
+\nonumber \\
+\end{eqnarray}
+
+Multiplying with the Toffoli to make the $UMA_2$ gate:
+
+Then multiplying in the $CCX$ gate
+\begin{eqnarray}
+\text{[UMA]}  &=& (I \otimes I \otimes \ket{0}\bra{0} + I \otimes \ket{0}\bra{0} \otimes \ket{1}\bra{1} + X \otimes \ket{1}\bra{1} \otimes \ket{1}\bra{1})
+\nonumber \\
+&& \times(\ket{0}\bra{0} \otimes (I \otimes \ket{0}\bra{0} + X \otimes \ket{1}\bra{1})
++ \ket{1}\bra{1} \otimes (I \otimes \ket{1}\bra{0}  + X \otimes \ket{0}\bra{1}))
+\nonumber \\
+&=& \ket{0}\bra{0} \otimes \left[I \otimes \ket{0}\bra{0} + \ket{0}\bra{1} \otimes \ket{1}\bra{1}\right] 
+\nonumber \\
+&& + \ket{0}\bra{1} \otimes \left[\ket{1}\bra{1} \otimes \ket{1}\bra{0}\right]
+\nonumber \\
+&& + \ket{1}\bra{0} \otimes \left[\ket{1}\bra{0} \otimes \ket{1}\bra{1}\right]
+\nonumber \\
+&& + \ket{1}\bra{1} \otimes \left[X \otimes \ket{0}\bra{1}+ \ket{0}\bra{0} \otimes \ket{1}\bra{0}\right]
+\nonumber \\
+&=& 
+\begin{pmatrix}
+1 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \\
+0 \quad & 0 \quad & 0 \quad & 1 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \\
+0 \quad & 0 \quad & 1 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \\
+0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 1 \quad & 0 \\
+0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 1 \\
+0 \quad & 0 \quad & 0 \quad & 0 \quad & 1 \quad & 0 \quad & 0 \quad & 0 \\
+0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 1 \quad & 0 \quad & 0 \\
+0 \quad & 1 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0
+\end{pmatrix}
+\end{eqnarray}
+
+The initial wavefunc transition is
+
+\begin{eqnarray}
+\ket{c_{i+1} (b_i\oplus a_i) (c_i\oplus a_i)} &=& 
+\begin{pmatrix} 000 \\ 001 \\ 010 \\ 011 \\ 100 \\ 101 \\ 110 \\ 111 \end{pmatrix} 
+\xrightarrow[\text{[UMA]}]{} 
+\begin{pmatrix} 000 \\ 011 \\ 010 \\ 110 \\ 111 \\ 100 \\ 101 \\ 001 \end{pmatrix}
+= \ket{a_i s_i c_i}
+\end{eqnarray}
+
+I find it interesting that it almost entirely reverses the output of the MAJ gate, but the second qubit is no longer one of the digits we need to add, it is the $i$-th digit of the sum we are looking for.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{All together}
+%
+We are looking to add two $n$-digit numbers together ($a + b = s$). We will find each individual digit of the sum, $s_i$, with each individual digit of the two numbers, $a_i + b_i$, plus the carry over bit for that digit, $c_i$, and therefore $s_i = a_i \oplus b_i \oplus c_i$ for $i<n$. The initial carry over bit is always $c_0 = 0$, and the final carry over bit is the final bit of the calculation $s_n = c_n$. Diagramatically, for $n=1$, we find:
+
+
+\begin{figure} [H]
+\centering
+\subfloat{
+\begin{quantikz}
+\lstick{$c_i$} 	& \MAJgate	& \midstick{$c_i \oplus a_i$}\qw & \qw 		& \UMAgate 	& \qw & \rstick{$c_i$} \\
+\lstick{$b_i$} 	& 			& \midstick{$b_i \oplus a_i$}\qw & \qw 		& 			& \qw & \rstick{$b_i$} \\
+\lstick{$a_i$} 	& 			& \midstick{$c_{i+1}$}\qw		 & \ctrl{1} & 			& \qw & \rstick{$a_i$} \\
+\lstick{$z$} 	& \qw 	    & \qw 							 & \targ{} 	& \qw 		& \qw & \rstick{$z \oplus s_n$} \\
+\end{quantikz}
+}
+\end{figure}
+
+And mathematically, this would be multiplying the two gates together, which is a lot of terms in bra-ket notation. Now I visually like working with this notation, but with so many terms, to save me from typing so much, and for readability, I will do it with matrix multiplication
+
+\begin{eqnarray}
+\text{[MAJ][UMA]} &=& 
+\begin{pmatrix}
+1 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \\
+0 \quad & 1 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \\
+0 \quad & 0 \quad & 1 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \\
+0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 1 \\
+0 \quad & 0 \quad & 0 \quad & 1 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \\
+0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 1 \quad & 0 \\
+0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 1 \quad & 0 \quad & 0 \\
+0 \quad & 0 \quad & 0 \quad & 0 \quad & 1 \quad & 0 \quad & 0 \quad & 0
+\end{pmatrix}
+\begin{pmatrix}
+1 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \\
+0 \quad & 0 \quad & 0 \quad & 1 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \\
+0 \quad & 0 \quad & 1 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \\
+0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 1 \quad & 0 \\
+0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 1 \\
+0 \quad & 0 \quad & 0 \quad & 0 \quad & 1 \quad & 0 \quad & 0 \quad & 0 \\
+0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 1 \quad & 0 \quad & 0 \\
+0 \quad & 1 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0
+\end{pmatrix}
+\nonumber \\
+&=& 
+\begin{pmatrix}
+1 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \\
+0 \quad & 0 \quad & 0 \quad & 1 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \\
+0 \quad & 0 \quad & 1 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \\
+0 \quad & 1 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \\
+0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 1 \quad & 0 \\
+0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 1 \quad & 0 \quad & 0 \\
+0 \quad & 0 \quad & 0 \quad & 0 \quad & 1 \quad & 0 \quad & 0 \quad & 0 \\
+0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 0 \quad & 1
+\end{pmatrix}
+\end{eqnarray}
+
+The transformation of the wavefunction is then
+
+\begin{eqnarray}
+\ket{a_i b_i c_i} &=& 
+\begin{pmatrix} 000 \\ 001 \\ 010 \\ 011 \\ 100 \\ 101 \\ 110 \\ 111 \end{pmatrix} 
+\xrightarrow[\text{[UMA]}]{} 
+\begin{pmatrix} 000 \\ 011 \\ 010 \\ 110 \\ 110 \\ 101 \\ 100 \\ 111 \end{pmatrix}
+= \ket{a_i s_i c_i}
+\end{eqnarray}
+
+This circuit has many gates, and once the number of digits get larger, it has many, many gates. One thing that can be done is to analyze the circuit and see any redundancies and take those gates out or move many gates to one time slice, if applicable. This can be read about more in the paper referenced in the abstract. A main point being, this is the case where you want to use the more complex $UMA_3$ gate as it allows for more of these simplifications to happen.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{thebibliography}{99}
+
+
+
+\end{thebibliography}
+
+\end{document}
+
+

@@ -1,0 +1,113 @@
+\documentclass[preprint,aps,prd,nofootinbib,superscriptaddress]{revtex4-2}
+
+\usepackage[T1]{fontenc}
+\usepackage[latin9]{inputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+%\usepackage{tikz-feynman}
+\usepackage{simplewick}
+\usepackage{slashed}
+\usepackage{caption}
+\usepackage{multirow}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage[caption = false]{subfig}
+\usepackage{mathtools}
+\usepackage{tikz}
+\usetikzlibrary{quantikz}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User specified LaTeX commands.
+
+\newcommand{\BraKet}[2]{\langle #1 | #2 \rangle}
+
+\begin{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\title{\boldmath Bernstein Vazirani Algorithm}
+
+
+\author{Cody M. Grant}
+
+
+\date{\today}
+
+%
+\maketitle
+\newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Problem}
+%
+This is an extension to the Deutsch-Jozsa alg (DJ alg). Assuming a black box function, $f$, which takes an input of a string of bits, it returns either 0 or 1:
+%
+\begin{eqnarray}
+f(x_0, x_1, x_2) = 0 \text{ or } 1 \text{, where $x_n$ is 0 or 1}
+\end{eqnarray}
+%
+However, instead of the function as balanced or constant, the function now guarantees to return a bitwise product of the input with some string, $s$:
+%
+\begin{eqnarray}
+f(x) = s \cdot x (\text{mod 2})
+\end{eqnarray}
+%
+We are expected to find $s$.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Generic Quantum Solution}
+%
+Similarly to the DJ alg, we have the circuit:
+
+\begin{figure} [H]
+\centering
+\begin{quantikz}
+\lstick{$\ket{0^{\otimes n}}$} 	& \qwbundle{n}\qw	& \gate{H^{\otimes n}}\slice{1}
+& \gate{f} \vqw{1} \slice{2} 	& \gate{H^{\otimes n}}\slice{3} 	& \qw	& \rstick{$\ket{S}$} \\
+\lstick{$\ket{1}$} 				& \qw				& \gate{H}		
+& \targ{}				& \qw 								& \qw	
+\end{quantikz}
+\end{figure}
+
+First, we apply the Hadamard gate to all initial qubits
+%
+\begin{eqnarray}
+\ket{\psi_1} &=& (H \otimes H)(\ket{1} \otimes \ket{0^{\otimes n}}) = \left[\frac{\ket{0} - \ket{1}}{\sqrt{2}}\right] \frac{1}{\sqrt{2^n}} \sum \limits_{x=0}^{2^n - 1}\ket{x}
+\end{eqnarray}
+%
+For the classical case, the oracle $f_s$ returns 1 for any input $x$ such that $s \cdot x \text{ mod } 2=1$, and zero otherwise. Using the same phase kickback trick we did in the DJ alg and acting on the last qubit in the $\ket{-}$, we would have
+%
+\begin{eqnarray}
+\ket{x} &\xrightarrow[f_s]{} & (-1)^{s \cdot x} \ket{x}
+\end{eqnarray}
+%
+Similarly, quantum oracle would be
+%
+\begin{eqnarray}
+\ket{\psi_2} &=& \frac{\ket{-}}{\sqrt{2^n}} \sum \limits_{x=0}^{2^n - 1}(-1)^{s \cdot x} \ket{x}
+\end{eqnarray}
+%
+Like in the DJ alg, the last qubit in the $\ket{-}$ is only there to give us this extra factor of $(-1)^{s \cdot x}$. After applying this factor, a Hadamard gate to all but the last qubit, we can find the string, $s$, that was applied as it will be our final string (ignoring the last qubit). First I would like to note that 
+%
+\begin{eqnarray}
+H^{\otimes n} {\sqrt{2^n}} \sum \limits_{x=0}^{2^n - 1}(-1)^{s \cdot x} \ket{x} &=& \frac{\ket{-}}{\sqrt{2^n}} \sum \limits_{x=0}^{2^n - 1}(-1)^{s \cdot x} \ket{x} = \ket{s}
+\end{eqnarray}
+%
+Therefore, applying the last $H$ gate means:
+%
+\begin{eqnarray}
+\ket{\psi_3} &=& \left(I \ket{-}\right)\otimes \left(H \left[\frac{1}{\sqrt{2^n}} \sum \limits_{x=0}^{2^n - 1}(-1)^{s \cdot x} \ket{x} \right]\right) = \ket{-}\otimes\ket{S}
+\end{eqnarray}
+%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{thebibliography}{99}
+
+
+
+\end{thebibliography}
+
+\end{document}
+
+

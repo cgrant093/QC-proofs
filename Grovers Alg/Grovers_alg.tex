@@ -1,0 +1,259 @@
+\documentclass[preprint,aps,prd,nofootinbib,superscriptaddress]{revtex4-2}
+
+\usepackage[T1]{fontenc}
+\usepackage[latin9]{inputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+%\usepackage{tikz-feynman}
+\usepackage{simplewick}
+\usepackage{slashed}
+\usepackage{caption}
+\usepackage{multirow}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage[caption = false]{subfig}
+\usepackage{mathtools}
+\usepackage{tikz}
+\usetikzlibrary{quantikz}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User specified LaTeX commands.
+
+\newcommand{\BraKet}[2]{\langle #1 | #2 \rangle}
+
+\begin{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\title{\boldmath Grover's Algorithm}
+
+
+\author{Cody M. Grant}
+
+
+\date{\today}
+
+%
+\maketitle
+\newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Problem}
+%
+Grover's alg is a search algorithm. Specifically, showing it's speed superiority over classical computers in searching unstructured databases. Compared to classical, it is a quadratic speed up.
+%
+
+%
+In an unstructured search, you are given a large list of $N$ items. We want to locate a specific item, and classically you would have to search $N/2$ of the items in the list (on average). With QC and Grover's amplitude amplification trick, it is sped up to about $\sqrt{N}$ items. It also doesn't use the list's internal structure as a parameter, making it generic and why the speed up is so powerful (especially at really large $N$).
+%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Creating an Oracle}
+%
+Assuming our database is comprised of all possible computational basis states. For example, with 3 qubits we'd have $\ket{000}, \ket{001}, ..., \ket{111}$ (or the states $\ket{0}\rightarrow \ket{7}$. The oracle first adds a negative phase to the state matching the solution:
+%
+\begin{eqnarray}
+U_\omega \ket{x} = \left\lbrace
+\begin{matrix}
++\ket{x}, \quad \text{if }x\neq \omega \\ 
+-\ket{x}, \quad \text{if }x= \omega \\ 
+\end{matrix}
+\right.
+\end{eqnarray} 
+%
+For many problems, it is very difficult to find a solution, but relatively easy to verify a solution, and for these we create a function $f$ that takes the proposed solution $x$, and returns $f(x) = 0$ if it is not a solution and 1 if it is:
+%
+\begin{eqnarray}
+U_\omega \ket{x} = (-1)^{f(x)}\ket{x}, \quad \text{where $f(x=\omega) = 1$ and $f(x)\neq\omega = 0$}
+\end{eqnarray} 
+%
+which looks very similar to the Deutsch-Jozsa oracle as well! Even looking at the circuit diagram is similar
+%
+\begin{figure} [H]
+\centering
+\begin{quantikz}
+\lstick{$\ket{x^{\otimes n}}$} 	& \qwbundle{n}\qw	& \gate{f} \vqw{1}	& \qw \rstick{$(-1)^{f(x)}\ket{x^{\otimes n}}$} \\
+\lstick{$\ket{-}$} 				& \qw				& \targ{}			& \qw \rstick{$\ket{-}$}
+\end{quantikz}
+\end{figure}
+%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Amplitude Amplification}
+%
+Here's the new part compared to the DJ alg. Since we don't know where the item of interest is in the list, any guess at it's location is equally good. The superposition of this unknown state is
+%
+\begin{eqnarray}
+\ket{s} = \frac{1}{\sqrt{2^n}}\sum \limits _{x = 0} ^{2^n-1} \ket{x}
+\end{eqnarray} 
+%
+where it's $2^n$ instead of $N$ because quantum mechanically, each list location is a qubit and a qubit has two equally likely states. Classically, on average we would need to try $N/2 = 2^{n-1}$ items in the list to find the one we're looking for.
+%
+
+%
+Amplitude amp enhances the amplitude of the marked item (which already has the opposite phase of all the other ones due to the first oracle). It does this with the use of a second reflection/rotation, but what it reflects over is the important part. 
+%
+
+%
+If we start from the beginning, we see that there are two vectors that are important to define: the initial superposition of where the item could be $\ket{s} = H^{\otimes n}\ket{o}^{\otimes n}$, and the "winning" vector that matches the item we are looking for, $\ket{\omega}$. From these, there is an additional state that we need to define, $\ket{s^\prime}$. It happens to sit in the same 2D plane of $\ket{s}$ and $\ket{\omega}$ and it is specifically perpendicular to $\ket{\omega}$. From here, you can see that the state $\ket{s}$ sits somewhere in between $\ket{\omega}$ and $\ket{s^\prime}$. 
+%
+\begin{eqnarray}
+\ket{s} \equiv \sin\theta\ket{\omega} + \cos\theta \ket{s^\prime}
+\end{eqnarray}
+%
+This angle, $\theta$, can be defined as
+%
+\begin{eqnarray}
+\theta \equiv \arcsin\BraKet{s}{\omega} = \arcsin\left(\frac{1}{\sqrt{2^n}} \right)
+\end{eqnarray}
+%
+Afterwards, we apply the first reflection, the oracle talked about in the previous section, $U_\omega$, which will apply a negative phase to the winner state, $\ket{\omega}$.
+%
+
+%
+The second reflection is roughly about the state $\ket{s}$ and can be defined as:
+%
+\begin{eqnarray}
+U_s &=& 2\ket{s}\bra{s} - 1
+\end{eqnarray}
+%
+This looks weird, but all you have to do is apply a negative phase to all states orthogonal to $\ket{s}$. If we were to do it step by step, it would symbolically look like this:
+%
+\begin{eqnarray}
+\ket{s} &\equiv & 
+\frac{1}{\sqrt{2^n}} \ket{\omega} 
++ \sqrt{1-\frac{1}{2^n}} \ket{s^\prime}
+\nonumber \\
+\ket{s_1} \equiv U_f \ket{s} &=& 
+- \frac{1}{\sqrt{2^n}} \ket{\omega} 
++ \sqrt{1-\frac{1}{2^n}} \ket{s^\prime}
+\nonumber \\
+\ket{s_G} \equiv U_s U_f \ket{s} &=& (2\ket{s}\BraKet{s}{s_1} - \ket{s_1})
+\end{eqnarray}
+%
+There is one inner product we need to figure out before we continue:
+%
+\begin{eqnarray}
+\BraKet{s}{s_1} &\equiv & 
+\left(\frac{1}{\sqrt{2^n}} \bra{\omega} 
++ \sqrt{1-\frac{1}{2^n}} \bra{s^\prime} \right) 
+\left(- \frac{1}{\sqrt{2^n}} \ket{\omega} 
++ \sqrt{1-\frac{1}{2^n}} \ket{s^\prime} \right)
+\nonumber \\
+&=& 1 - \frac{2}{2^n}
+\end{eqnarray}
+%
+Therefore, the final state after both rotations looks like:
+%
+\begin{eqnarray}
+\ket{s_G} &=& 2\left(1 - \frac{2}{2^n}\right)\ket{s} - \ket{s_1}
+\nonumber \\
+&=& \left(2 - \frac{4}{2^n}\right)\left(\frac{1}{\sqrt{2^n}} \ket{\omega} 
++ \sqrt{1-\frac{1}{2^n}} \ket{s^\prime} \right) - \left(- \frac{1}{\sqrt{2^n}} \ket{\omega} 
++ \sqrt{1-\frac{1}{2^n}} \ket{s^\prime} \right)
+\nonumber \\
+&=& \left(3 - \frac{4}{2^n}\right)\frac{1}{\sqrt{2^n}} \ket{\omega} 
++ \left(1 - \frac{4}{2^n}\right) \sqrt{1-\frac{1}{2^n}} \ket{s^\prime}
+\end{eqnarray}
+%
+We can see that the normalization function of the winner state is different from all states perpendicular to it. It should also be noted that these two gate need to be repeatedly applied as the value $N = 2^n$ grows. We can see that for $N=4$ (or $n=2$), so we'd only need 2 qubits, the combination of $U_\omega U_s$ only need to be applied a single time. This can clearly be seen as the factor in front of $\ket{s^\prime}$ is 0 for $n=2$. 
+%
+
+%
+Whereas, for $n=3$ the number of times isn't so obvious. After a single time, neither coefficient is zero, and they are actually pretty close, I think one is $\frac{5}{4\sqrt{8}}$ and the other is $\frac{\sqrt{7}}{4\sqrt{8}}$, which is still different, but with error the answer could skew from the correct answer. You may need to apply them 3 times as in this case $\sqrt{8}\approx 3$. We can actually solve for the number of times it'll take generically.
+%
+
+%
+Say after $t$ steps we'd have:
+%
+\begin{eqnarray}
+(U_s U_\omega)^t \ket{s} &=& \sin\theta_t \ket{\omega} + \cos\theta_t \ket{s^\prime}
+\nonumber \\
+\text{where}\quad \quad \quad \quad &&
+\nonumber \\
+\theta_t &=& (2t + 1) \theta
+\end{eqnarray}
+%
+and remembering that $\theta = \arcsin\left(\frac{1}{\sqrt{2^n}}\right)$ and requiring $\theta_t = \frac{\pi}{2}$, we find the relation
+%
+\begin{eqnarray}
+(2t + 1) \arcsin\left(\frac{1}{\sqrt{2^n}}\right) &=& \frac{\pi}{2}
+\nonumber \\
+\rightarrow t &=& \frac{\pi}{4\arcsin\left(\frac{1}{\sqrt{2^n}}\right)} - \frac{1}{2}
+\end{eqnarray}
+%
+So for $n=2 \rightarrow t=1$, but for $n=3 \rightarrow t \approx \frac{\pi}{4(0.361)} - \frac{1}{2} \approx 1.67$ which means we need to run it 2 times. The number of times you'd have to run it probably get closer to $\sqrt{2^n}$ the larger $n$ is.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Diffuser}
+%
+What I find really interesting about the diffuser is that on the Qiskit website textbook, it says the 2 qubit diffuser looks like this:
+%
+\begin{figure} [H]
+\centering
+\begin{quantikz}
+& \gate{H}	& \gate{Z} & \ctrl{1} & \gate{H} & \qw \\
+& \gate{H}	& \gate{Z} & \ctrl{}  & \gate{H} & \qw \\
+\end{quantikz}
+\caption{2 qubit diffuser found on qiskit's website: https://qiskit.org/textbook/ch-algorithms/grover.html}
+\end{figure}
+%
+which would lead to mathematically, 
+%
+\begin{eqnarray}
+U_{s,2A} &=& (H \otimes H)(Z \otimes Z)(\ket{0}\bra{0} \otimes I + \ket{1}\bra{1} \otimes Z)(H \otimes H)
+\nonumber \\
+&=& (H \otimes H)(\ket{0}\bra{0} \otimes Z   - \ket{1}\bra{1} \otimes I)(H \otimes H)
+\nonumber \\
+&=& (\ket{+}\bra{+} \otimes X - \ket{-}\bra{-} \otimes I)
+\end{eqnarray}
+%
+but for a 3 qubit circuit, the same location has diffuser has the following gates:
+%
+\begin{figure} [H]
+\centering
+\begin{quantikz}
+& \gate{H}	& \gate{X} & \gate{Z} \vqw{2} & \gate{X} & \gate{H} & \qw \\
+& \gate{H}	& \gate{X} & \ctrl{} 		  & \gate{X} & \gate{H} & \qw \\
+& \gate{H}	& \gate{X} & \ctrl{} 		  & \gate{X} & \gate{H} & \qw \\
+\end{quantikz}
+\caption{generic 3 qubit diffuser found on qiskit's website: https://qiskit.org/textbook/ch-algorithms/grover.html}
+\end{figure}
+%
+and if I wanted to convert the above generic diffuser to 2 qubits, it would look like this
+%
+\begin{figure} [H]
+\centering
+\begin{quantikz}
+& \gate{H}	& \gate{X} & \gate{Z} \vqw{1} & \gate{X} & \gate{H} & \qw \\
+& \gate{H}	& \gate{X} & \ctrl{} 		  & \gate{X} & \gate{H} & \qw \\
+\end{quantikz}
+\caption{generic 2 qubit diffuser converted from the generic 3 qubit diffuser found on qiskit's website: https://qiskit.org/textbook/ch-algorithms/grover.html}
+\end{figure}
+%
+and mathematically, this would be the following
+%
+\begin{eqnarray}
+U_{s,2B} &=& (H \otimes H)(X \otimes X)(\ket{0}\bra{0} \otimes I + \ket{1}\bra{1} \otimes Z)(X \otimes X)(H \otimes H)
+\nonumber \\
+&=& (H \otimes H)(\ket{1}\bra{1} \otimes I - \ket{0}\bra{0} \otimes Z)(H \otimes H)
+\nonumber \\
+&=& (\ket{-}\bra{-} \otimes I - \ket{+}\bra{+} \otimes X)
+\end{eqnarray}
+%
+where in the second line, we used the fact that $XZX = -Z$. Comparing $U_{s,2A}$ to $U_{s,2B}$, you see that they have a difference by an overall negative phase, $U_{s,2A} = (-1)U_{s,2B}$. 
+%
+
+%
+Initially, I thought a phase difference of -1 showed either some typo in either my or qiskit's work. However, while reading the section on "Creating a General Diffuser", they state that we can "ignore a global phase of -1" [for the diffuser section of the circuit]. This means that the phase difference we found was something that can be ignored. 
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{thebibliography}{99}
+
+
+
+\end{thebibliography}
+
+\end{document}
+
+

@@ -1,0 +1,156 @@
+\documentclass[preprint,aps,prd,nofootinbib,superscriptaddress]{revtex4-2}
+
+\usepackage[T1]{fontenc}
+\usepackage[latin9]{inputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+%\usepackage{tikz-feynman}
+\usepackage{simplewick}
+\usepackage{slashed}
+\usepackage{caption}
+\usepackage{multirow}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage[caption = false]{subfig}
+\usepackage{mathtools}
+\usepackage{tikz}
+\usetikzlibrary{quantikz}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User specified LaTeX commands.
+
+\newcommand{\BraKet}[2]{\langle #1 | #2 \rangle}
+
+\begin{document}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\title{\boldmath Deutsch Jozsa Algorithm}
+
+
+\author{Cody M. Grant}
+
+
+\date{\today}
+
+%
+\maketitle
+\newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Problem}
+%
+Given a hidden boolean function $f$, which takes an input of a string of bits, it returns either 0 or 1:
+
+\begin{eqnarray}
+f(x_0, x_1, x_2) = 0 \text{ or } 1 \text{, where $x_n$ is 0 or 1}
+\end{eqnarray}
+
+The function has to have a guarantee that it's either balanced or constant. A constant function returns either all 0's or all 1's for any input, while a balanced function returns 0 for exactly half of all inputs and 1 for the other half. The algorithm determines if the function is balanced or constant. The circuit diagram looks like the following
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Generic Quantum Solution}
+%
+
+\begin{figure} [H]
+\centering
+\begin{quantikz}
+\lstick{$\ket{0^{\otimes n}}$} 	& \qwbundle{n}\qw	& \gate{H^{\otimes n}}\slice{1}
+& \gate[wires=2][2cm]{U_f}\slice{2}
+	\gateinput{$x$}
+	\gateoutput{$x$} 				
+& \gate{H^{\otimes n}}\slice{3} 	& \meter{} \\
+\lstick{$\ket{1}$} 				& \qw				& \gate{H}		
+& 	\gateinput{$y$}
+	\gateoutput{$y \oplus f(x)$}	
+& \qw 					& \qw 
+\end{quantikz}
+\end{figure}
+
+The first wire actually consists of $n$ wires which we have all initialized in the $\ket{0}$, these are our inputs that we would change to determine balanced or constant in the classical case. And we have an extra qubit, initialized in the $\ket{1}$. It would be easier to show initially if we do this for the $n=1$ case, and after applying a Hadamard gate to all initial qubits, we have the state:
+%
+\begin{eqnarray}
+\ket{\psi_1} &=& (H \otimes H)(\ket{1} \otimes \ket{0}) = \frac{1}{\sqrt{2^{1+1}}} (\ket{0} - \ket{1})(\ket{0} + \ket{1}) = \frac{1}{\sqrt{2^{1+1}}} \sum \limits_{x=0}^{2^1 - 1}(\ket{0} - \ket{1})\ket{x}
+\end{eqnarray}
+%
+The most interesting piece about this algorithm is the mysterious oracle gate, $U_f$. Actually, this gate acts similarly to a $CX$ gate, and what do I mean by that? The two gates in action:
+%
+\begin{eqnarray}
+CX(0,1)\ket{yx} &=& \ket{y\oplus x, x}
+\nonumber \\
+U_f\ket{yx} &=& \ket{y\oplus f(x), x}
+\end{eqnarray}
+%
+Comparing the $U_f$ to the $CX$ gate, we find that the 2nd qubit's output from the $CX$ gate is mod-2 addition of the two inputs, whereas for the $U_f$ gate it is the mod-2 addition of the $x$ input and this function $f(x)$ we're trying to categorize. After applying this gate, our wavefunction becomes: 
+%
+\begin{eqnarray}
+\ket{\psi_2} &=& U_f\ket{\psi_1} = \frac{1}{\sqrt{2^{1+1}}} \sum \limits_{x=0}^{2^1 - 1}(\ket{0\oplus f(x)} - \ket{1\oplus f(x)})\ket{x}
+\nonumber \\
+&=& \frac{1}{\sqrt{2^{1+1}}} \sum \limits_{x=0}^{2^1 - 1} (-1)^{f(x)}(\ket{0} - \ket{1})\ket{x}
+\end{eqnarray}
+%
+This last part is applying the Hadamard gate back on all but the last qubit. 
+%
+\begin{eqnarray}
+\ket{\psi_3} &=& \frac{1}{\sqrt{2^{1+1}}} \sum \limits_{x=0}^{2^1 - 1} (-1)^{f(x)}(\ket{0} - \ket{1})\left[H\ket{x}\right]
+\nonumber \\
+&=& \frac{1}{\sqrt{2^{1+1}}} \sum \limits_{x=0}^{2^1 - 1} (-1)^{f(x)}(\ket{0} - \ket{1})\left[\frac{1}{\sqrt{2^1}}\sum \limits_{z=0}^{2^1 - 1} (-1)^{x \cdot z}\ket{z}\right]
+\nonumber \\
+&=& \left[\frac{(\ket{0} - \ket{1})}{\sqrt{2}}\right] \frac{1}{2^1} \sum \limits_{z=0}^{2^1 - 1} \left[ \sum \limits_{x=0}^{2^1 - 1} (-1)^{f(x)} (-1)^{x \cdot z} \right]\ket{z}
+\end{eqnarray}
+%
+Actually, after applying the oracle the value of the last qubit is uninteresting to us, so we could ignore it the final calculations. Notice that if you try measuring the probability of $\ket{\psi_3}$, you would find a really interesting result:
+%
+\begin{eqnarray}
+\bra{\psi_3}\ket{\psi_3} &=& \bra{z_1}\left(\frac{1}{2^1} \sum \limits_{z_1=0}^{2^1 - 1} \left[ \sum \limits_{x=0}^{2^1 - 1} (-1)^{f(x)} (-1)^{x \cdot z_1} \right] \right)\left(\frac{1}{2^1} \sum \limits_{z_2=0}^{2^1 - 1} \left[ \sum \limits_{x=0}^{2^1 - 1} (-1)^{f(x)} (-1)^{x \cdot z_2} \right] \right) \ket{z_2}
+\nonumber \\
+&=& \left(\frac{1}{2^1} \sum \limits_{z_1=0}^{2^1 - 1} \left[ \sum \limits_{x=0}^{2^1 - 1} (-1)^{f(x)} (-1)^{x \cdot z_1} \right] \right)\left(\frac{1}{2^1} \sum \limits_{z_2=0}^{2^1 - 1} \left[ \sum \limits_{x=0}^{2^1 - 1} (-1)^{f(x)} (-1)^{x \cdot z_2} \right] \right) \delta_{z_1 z_2}
+\nonumber \\
+&=& \left|\frac{1}{2^1} \left[ \sum \limits_{x=0}^{2^1 - 1} (-1)^{f(x)} \right] \right|^2
+\end{eqnarray}
+%
+where no matter what $z_1$ is, the factor of $\left| (-1)^{x \cdot z_1}\right|^2 = 1$, and so that term is dropped. Calculating out the above result says
+%
+\begin{eqnarray}
+\bra{\psi_3}\ket{\psi_3} &=& \left|\frac{1}{2^1} \left[ \sum \limits_{x=0}^{2^1 - 1} (-1)^{f(x)} \right] \right|^2 = \left\lbrace 
+\begin{matrix}
+0, \quad \text{if } f(x) \text{ is balanced}\\ 
+1, \quad \text{if } f(x) \text{ is constant}
+\end{matrix}
+\right.
+\end{eqnarray}
+%
+Which means, all we have to do is take one measurement, and we know whether the function, $f(x)$, is balanced or constant.  Classically, the case of $n=1$ would have taken 2 measurements to categorize the function. 
+%
+
+%
+What about if $n$ was larger? It would take many more measurements to categorize. Worst case, we'd have to measure one more than half of all possible options. However, for this quantum algorithm, the function can easily be scaled to larger $n$ and you will only ever have to take one measurement to categorize the function. For explicitly writing things out, we would have:
+%
+\begin{eqnarray}
+\ket{\psi_1} &=& \left[\frac{(\ket{0} - \ket{1})}{\sqrt{2}}\right] \frac{1}{\sqrt{2^{n}}} \sum \limits_{x=0}^{2^n - 1}\ket{x}
+\nonumber \\
+\ket{\psi_2} &=& \left[\frac{(\ket{0} - \ket{1})}{\sqrt{2}}\right] \frac{1}{\sqrt{2^{n}}} \sum \limits_{x=0}^{2^n - 1} (-1)^{f(x)}\ket{x}
+\nonumber \\
+\ket{\psi_3} &=& \left[\frac{(\ket{0} - \ket{1})}{\sqrt{2}}\right] \frac{1}{2^n} \sum \limits_{z=0}^{2^n - 1} \left[ \sum \limits_{x=0}^{2^n - 1} (-1)^{f(x)} (-1)^{x \cdot z} \right]\ket{z}
+\nonumber \\
+\BraKet{\psi_3}{\psi_3} &=& \left|\frac{1}{2^n} \left[ \sum \limits_{x=0}^{2^n - 1} (-1)^{f(x)} \right] \right|^2 = \left\lbrace 
+\begin{matrix}
+0, \quad \text{if } f(x) \text{ is balanced}\\ 
+1, \quad \text{if } f(x) \text{ is constant}
+\end{matrix}
+\right.
+\end{eqnarray}
+%
+This works because in the balanced case, since we sum before we square, half of the values would destructively interfere with the other values resulting in us squaring 0. In the constant case, we have constructive interference and the result would either be $\left|\pm\frac{2^n}{2^n} \right|^2 = 1$.
+%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{thebibliography}{99}
+
+
+
+\end{thebibliography}
+
+\end{document}
+
+

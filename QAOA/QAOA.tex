@@ -1,0 +1,250 @@
+\documentclass[preprint,aps,prd,nofootinbib,superscriptaddress]{revtex4-2}
+
+\usepackage[T1]{fontenc}
+\usepackage[latin9]{inputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+%\usepackage{tikz-feynman}
+\usepackage{simplewick}
+\usepackage{slashed}
+\usepackage{caption}
+\usepackage{multirow}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage[caption = false]{subfig}
+\usepackage{mathtools}
+\usepackage{tikz}
+\usetikzlibrary{quantikz}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User specified LaTeX commands.
+
+\newcommand{\BraKet}[2]{\langle #1 | #2 \rangle}
+\newcommand{\KetBra}[2]{\ket{#1}\bra{#2}}
+
+\begin{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\title{\boldmath Quantum Approximate Optimization Algorithm}
+
+
+\author{Cody M. Grant}
+
+
+\date{\today}
+
+\begin{abstract}
+
+Combinatorial Optimization problems find an optimal object out of a finite set of objects. Focusing on problems finding "optimal" bitstrings composed of 0's and 1's among a finite set of bitstrings.
+
+\end{abstract}
+
+%
+\maketitle
+\newpage
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Intro}
+%
+Variational alg that uses a unitary $U(\beta, \gamma)$ to prepare a quantum state $\ket{\psi(\beta, \gamma)}$. The goal is to find the optimal parameters, so that $\ket{\psi(\beta_{opt}, \gamma_{opt})}$ encodes the solution to the problem.
+%
+
+%
+The unitary is composed of two unitaries: $U(\beta)= e^{-i \beta H_B}$ and $U(\gamma)= e^{-i \gamma H_P}$, where $H_B$ is the mixing Hamiltonian, and $H_P$ is the problem Hamiltonian. These choices are inspired from quantum annealing. The state is prepared by applying the two unitaries in alternating fashion some $p$ times:
+%
+\begin{eqnarray}
+\ket{\psi(\beta, \gamma)} &=& 
+\underbrace{U(\beta) U(\gamma)...U(\beta) U(\gamma)}_{p \text{ times}} \ket{\psi_0}
+\end{eqnarray}
+%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Problem Hamiltonian}
+%
+The generial form for combinatorial optimization problems is to 
+%
+\begin{eqnarray}
+\text{maximize } && C(x)
+\nonumber \\
+\text{subject to } && x \in S
+\end{eqnarray}
+%
+where $x \in S$ is a discrete variable and $C(x)$ is the cost function that maps some domain $S$ to real numbers. Involving terms only in a subset $Q\subset [n]$ of $n$ bits in the bitstring, the cost function for binary comb opt probs can be written as:
+%
+\begin{eqnarray}
+C(x) &=& \sum \limits _{(Q,\bar{Q}) \subset [n]} \omega_{(Q,\bar{Q})} \prod \limits _{i \in Q} x_i \prod \limits _{j \in \bar{Q}} (1-x_j)
+\end{eqnarray}
+%
+where $x_i \in \lbrace 0,1 \rbrace$ and $\omega_{(Q,\bar{Q})}$ is real. We want to find when $C(x)$ is maximized. The cost function can be mapped to a Hamiltonian that is diagonal in the computational basis:
+%
+\begin{eqnarray}
+H &=& \sum \limits _{x \in \lbrace 0,1 \rbrace ^n} C(x) \ket{x} \bra{x}
+\end{eqnarray}
+%
+If the cost function only has at most weight $k$ terms (only involving at most $Q\leq k$ bits), then this diagonal Hamiltonian is also only a sum of weight $k$ Pauli Z operators. When subbing in the cost function form, we find that the $H$ can be written as:
+%
+\begin{eqnarray}
+H &=& \sum \limits _{(Q,\bar{Q}) \subset [n]} \frac{\omega_{(Q,\bar{Q})}}{2^{|Q| + |\bar{Q}|}}\prod \limits _{i \in Q} (1 - Z_i) \prod \limits _{j \in \bar{Q}} (1 + Z_j)
+\end{eqnarray}
+%
+Asuming only a few weights are non-zero, and that the set $|(Q, \bar{Q})|$ is bounded and not too large, then we can write the Hamiltonian as a sum of local terms
+%
+\begin{eqnarray}
+H &=& \sum \limits _{k=1} ^m \hat{C}_k
+\end{eqnarray}
+%
+
+We'll use a Max-Cut problem to show how you'd find a Problem Hamiltonian.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Max-Cut Problem Example}
+%
+Max-Cut involves partitioning nodes of a graph into two sets, such that you maximize the number of edges between the two sets. 
+%
+
+%
+For example, a square's vertices can be colored "red" or "blue" (or "0" or "1", respectively, remember: bitstrings). There are $2^4 = 16$ possible ways to color the vertices. The possible number of edges between the sets can be: 0 if all vertices are one color, 2 if with color distribution 3 and 1, also 2 if you have 2 and 2 but the blue has a blue neighbor and red has a red neighbor, or 4 if you have 2 and 2 but they are alternating. Bitstring wise, the answers "0101" and "1010" are both solutions to the problem.
+%
+
+%
+Fir, consider an $n$-node non-direct graph, the cost function is the sum of weights of edges connecting point in two different subsets. By assigning $x_i = 0 || 1$ to each node, maximizing the cost function would take the form:
+%
+\begin{eqnarray}
+C(x) &=& \sum \limits _{i,j=1} ^n \omega_{ij} x_i (1-x_j) 
+\end{eqnarray}
+%
+Since, we want to write the sum over the edges in the set $(i,j)\in E$, the weights go to 1 in this case and we simplify:
+%
+\begin{eqnarray}
+C(x) &=& \sum \limits _{(i,j)\in E} (x_i (1-x_j) +  x_j (1-x_i))
+\end{eqnarray}
+%
+As we did above, to find the Hamiltonian, we will essentially send $x_i \rightarrow (I_i-Z_i)/2$ and find
+%
+\begin{eqnarray}
+H &=& \sum \limits _{(i,j)\in E} \frac{1}{4}((I_i - Z_i)\otimes (I_j + Z_j) + (I_i + Z_i) \otimes (I_j - Z_j))
+\nonumber \\
+&=& \sum \limits _{(i,j)\in E} \frac{1}{2}(I_i \otimes I_j - Z_i \otimes Z_j)
+\end{eqnarray}
+%
+For our specific Max-Cut problem of 4 nodes, we see that there are 8 terms and four of those are $I_i \otimes I_j$ which in a circuit diagram will introduce the same overall phase to all qubits, and since the phase is consistent, the sum of these four terms can functionally be ignored. The four remaining terms all have a constant factor of $(-1/2)$, and the only thing this will alter is the value of the parameter, $\gamma$, since we are optimizing this parameter anyway, this constant factor can be ignored constructing the unitary gate. This means that our Hamiltonian and unitary gate have the forms:
+%
+\begin{eqnarray}
+H_P &=& 
+-\frac{1}{2}(Z_0 \otimes Z_1 \otimes I_2 \otimes I_3) 
+- \frac{1}{2}(I_0 \otimes Z_1 \otimes Z_2 \otimes I_3)
+\nonumber \\
+&& \quad 
+- \frac{1}{2}(I_0 \otimes I_1 \otimes Z_2 \otimes Z_3)
+- \frac{1}{2}(Z_0 \otimes I_1 \otimes I_2 \otimes Z_3)
+\nonumber \\
+\rightarrow U(\gamma) &=&
+e^{-i \gamma H_P} = e^{-i \gamma Z_0 \otimes Z_1}e^{-i \gamma Z_1 \otimes Z_2}e^{-i \gamma Z_2 \otimes Z_3}e^{-i \gamma Z_0 \otimes Z_3}
+\nonumber \\
+&=& R_{Z_0 Z_1}(2 \gamma) R_{Z_1 Z_2}(2 \gamma) R_{Z_2 Z_3}(2 \gamma) R_{Z_0 Z_3}(2 \gamma)
+\end{eqnarray}
+%
+The $R_{ZZ}$ gate can actually be decomposed into 2 $CX$ gates and a single $R_Z$ gate in the following way:
+%
+\begin{figure} [H]
+\centering
+\subfloat{
+\begin{quantikz}
+& \gate[wires=2]{R_{ZZ} (2\gamma)} 	& \qw \\
+& 									& \qw 
+\end{quantikz}
+}
+$\quad = $
+\subfloat{
+\begin{quantikz}
+& \ctrl{1} & \qw					 & \ctrl{1} & \qw \\
+& \targ{}  & \gate{R_{Z} (2\gamma)}  & \targ{}  & \qw 
+\end{quantikz}
+}
+\end{figure}
+%
+The circuit diagram has the following decomposed form:
+%
+\begin{figure} [H]
+\centering
+\begin{quantikz}
+\lstick{$q_0$} 
+& \ctrl{1}	& \qw						& \ctrl{1}\slice{}	
+& \qw		& \qw  						& \qw 
+& \qw		& \qw  						& \qw 
+& \ctrl{3}	& \qw						& \ctrl{3}\slice{}
+& \qw \\
+\lstick{$q_1$} 
+& \targ{}	& \gate{R_{Z} (2\gamma)}	& \targ{}  			
+& \ctrl{1}	& \qw						& \ctrl{1}\slice{}
+& \qw		& \qw  						& \qw 
+& \qw		& \qw  						& \qw
+& \qw \\
+\lstick{$q_2$} 
+& \qw		& \qw  						& \qw  				
+& \targ{}	& \gate{R_{Z} (2\gamma)}	& \targ{}		
+& \ctrl{1}	& \qw						& \ctrl{1}\slice{}
+& \qw		& \qw  						& \qw
+& \qw \\
+\lstick{$q_3$} 
+& \qw		& \qw  						& \qw  				
+& \qw		& \qw  						& \qw 
+& \targ{}	& \gate{R_{Z} (2\gamma)}	& \targ{} 
+& \targ{}	& \gate{R_{Z} (2\gamma)}	& \targ{}
+& \qw 
+\end{quantikz}
+\end{figure}
+%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Mixer Hamiltonian and initial state prep for Max-Cut}
+%
+Usually the mixer Hamiltonian:
+%
+\begin{eqnarray}
+H_B &=& (X_0 \otimes I_1 \otimes I_2 \otimes I_3) 
++ (I_0 \otimes X_1 \otimes I_2 \otimes I_3) 
+\nonumber \\
+&& \quad + (I_0 \otimes I_1 \otimes X_2 \otimes I_3) 
++ (I_0 \otimes I_1 \otimes I_2 \otimes X_3) 
+\end{eqnarray}
+%
+This means the unitary gate is simply four single $R_X$ gates with the angle $\beta$:
+%
+\begin{eqnarray}
+U(\beta) &=& e^{i\beta H_B} = R_{X}(2\beta) \otimes R_{X}(2\beta) \otimes R_{X}(2\beta) \otimes R_{X}(2\beta)
+\end{eqnarray}
+%
+As for the initial state used during QAOA, it is usually an equal superposition of all states, and therefore we just apply the Hadamard gate to each qubit.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Optimizing $\beta$ and $\gamma$}
+%
+
+\begin{enumerate}
+\item Initialize $\beta$ and $\gamma$ to suitable real values.
+\item Repeat the following until the convergence criteria is met:
+\begin{enumerate}
+  	\item Prepare state $\ket{\psi(\beta, \gamma)}$ using QAOA circuit
+  	\item Measure state in std basis
+  	\item Compute $\bra{\psi(\beta, \gamma)} H_P \ket{\psi(\beta, \gamma)}$
+  	\item Find updated params using classical opt algorithm
+\end{enumerate}
+\end{enumerate}
+%
+
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{thebibliography}{99}
+
+
+
+\end{thebibliography}
+
+\end{document}
+
+
